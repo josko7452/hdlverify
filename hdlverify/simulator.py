@@ -6,9 +6,6 @@
 
 """
 
-from hdlverify.modelsim_simulator import ModelsimSimulator
-from hdlverify.ghdl_simulator import GHDLSimulator
-from hdlverify.icarus_simulator import IcarusSimulator
 from hdlverify.error import SimulatorNotAvailError
 from hdlverify import util
 import os
@@ -40,6 +37,10 @@ class Simulator(object):
            'VHDL-2008': None}
 
     @classmethod
+    def from_args(cls):
+        raise NotImplementedError
+
+    @classmethod
     def _find_in_path(cls):
         return os.path.dirname(util.which(cls.sim_exec))
 
@@ -48,9 +49,8 @@ class Simulator(object):
         lookup = 'HDLVERIFY_' + cls.name.upper() + '_PATH'
         path = os.environ.get(lookup)
         if path is None:
-            logging.info('[%s] %s variable is not specified, trying PATH',
-                         cls, lookup)
-            path = cls.find_in_path()
+            logging.info('%s variable is not specified, trying PATH', lookup)
+            path = cls._find_in_path()
         return path
 
     @classmethod
@@ -64,6 +64,7 @@ class Simulator(object):
         self.path = self._find_path()
 
     def _exec(self, cmd, *args, **kwargs):
+        cmd = [i for i in cmd if i is not None]
         logging.debug('[%s] Running: %s', self, ' '.join(cmd))
         kwargs.setdefault('env', {})
         subprocess.check_call(cmd, *args, **kwargs)
@@ -79,7 +80,7 @@ class Simulator(object):
             logging.warning('[%s] Library %s does already exists', self, lib)
         else:
             self.libs.add(lib)
-            self._add_lib()
+            self._add_lib(lib)
 
     def add_src(self, path, lib, std=None, include=None, defines={}):
         if path in self.srcs:
@@ -88,18 +89,21 @@ class Simulator(object):
             self.srcs[path] = (lib, std, include)
             self._add_src(path, (lib, std, include, defines))
 
-    def get_run_cmd(self):
+    def get_run_cmd(self, top, fli=None):
         raise NotImplementedError
 
     def __str__(self):
         raise NotImplementedError
 
+from hdlverify.modelsim_simulator import ModelsimSimulator
+from hdlverify.ghdl_simulator import GHDLSimulator
+from hdlverify.icarus_simulator import IcarusSimulator
 
 avail = [ModelsimSimulator,
          GHDLSimulator,
          IcarusSimulator]
 
-env_sim = os.environ[SIM_ENV] if os.environ[SIM_ENV] else None
+env_sim = os.environ[SIM_ENV] if SIM_ENV in os.environ else None
 
 
 def factory(args):

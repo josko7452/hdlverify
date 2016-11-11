@@ -62,5 +62,6 @@ setup(
         'Development Status :: 5 - Production/Stable',
         'Natural Language :: English'
     ],
-    packages=['hdlverify']
+    packages=['hdlverify'],
+    include_package_data = True
 )

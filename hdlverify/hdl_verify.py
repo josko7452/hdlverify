@@ -9,7 +9,9 @@ from python utilising MyHDL cosimulation capabity.
 
 from hdlverify.hdl_library import HDLLibrary
 from hdlverify.hdl_instance import HDLInstance
-from hdlverify.simulator import simulator
+from hdlverify import simulator
+from debug import Debug
+
 
 class HDLVerify():
 
@@ -18,14 +20,18 @@ class HDLVerify():
         pass
 
     @classmethod
-    def from_args(cls, args=None):
-        return cls(simulator.factory(args.sim))
+    def init_args(cls, args=None):
+        if hasattr(args, 'verbose') and args.verbose:
+            Debug.enable()
+        else:
+            Debug.disable()
+        return cls(simulator.factory(args).from_args(args))
 
     def __init__(self, sim):
         self.simulator = sim
 
-    def instance():
+    def instance(self):
         return HDLInstance(self)
 
-    def library(name):
+    def library(self, name):
         return HDLLibrary(name, self)
