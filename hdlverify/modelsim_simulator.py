@@ -105,8 +105,9 @@ class ModelsimSimulator(Simulator):
     def _get_dofile(self):
         dofile = os.path.join(self.workdir, 'msim_cosim.do')
         with open(dofile, 'w') as f:
-            f.write('run -all\n')
-            f.write('quit')
+            if not self.gui:
+                f.write('run -all\n')
+                f.write('quit')
         return dofile
 
     def _get_fli(self):
