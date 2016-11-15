@@ -51,7 +51,7 @@ class ModelsimSimulator(Simulator):
             modelsim_ini = args.modelsim_ini
         elif hasattr(args, 'gui'):
             gui = args.gui
-            return cls(workdir, modelsim_ini, gui)
+        return cls(workdir, modelsim_ini, gui)
 
     def __init__(self, workdir='msim_work', modelsim_ini='modelsim_ini',
                  gui=False):
