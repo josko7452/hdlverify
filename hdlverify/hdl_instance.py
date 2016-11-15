@@ -78,6 +78,8 @@ class _CosimGen(object):
         from_myhdl = from_myhdl[self.INDENT+1:-2]
         params = ''
         for k, v in self.param.items():
+            if type(v) == bool:
+                v = 1 if v else 0
             params += self.PARAM_VAL.format(par=k, val=v)
         params = self.PARAM_TPL.format(param=params[:-2])
 
