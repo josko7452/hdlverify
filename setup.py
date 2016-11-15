@@ -63,5 +63,6 @@ setup(
         'Natural Language :: English'
     ],
     packages=['hdlverify'],
+    install_requires=['enum34'],
     include_package_data = True
 )
