@@ -138,6 +138,9 @@ class HDLInstance(object):
         else:
             raise UnitNotFoundError('work', top_name)
 
+        for k, v in self.libs.items():
+            v._compile()
+
         gen = _CosimGen(top, param, port, self.ver.simulator)
         instance = gen._cosim()
         return instance

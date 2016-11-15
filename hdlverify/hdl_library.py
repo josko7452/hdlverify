@@ -15,12 +15,17 @@ class HDLLibrary():
     def __init__(self, name, ver=None):
         self.ver = ver
         self.name = name
-        self.ver.simulator.add_lib(name)
+        self.sources = []
 
     def add_source_files(self, path, std=None, include=None):
         for f in glob.glob(path):
             logging.debug('[%s ]Adding src: %s to simulator: %s'
                           % (self, f, self.ver.simulator))
+            self.sources.append((f, std, include))
+
+    def _compile(self):
+        self.ver.simulator.add_lib(self.name)
+        for f, std, include in self.sources:
             self.ver.simulator.add_src(f, self.name, std, include)
 
     def __str__(self):
