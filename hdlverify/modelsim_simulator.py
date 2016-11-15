@@ -42,14 +42,16 @@ class ModelsimSimulator(Simulator):
 
     @classmethod
     def from_args(cls, args=None):
-        if hasattr(args, 'workdir') and hasattr(args, 'modelsim_ini'):
-            return cls(args.workdir, args.modelsim_ini)
-        elif hasattr(args, 'workdir'):
-            return cls(workdir=args.workdir)
+        workdir = 'msim_work'
+        modelsim_ini = 'modelsim_ini'
+        gui = False
+        if hasattr(args, 'workdir'):
+            workdir = args.workdir
         elif hasattr(args, 'modelsim_ini'):
-            return cls(modelsim_ini=args.modelsim_ini)
-        else:
-            return cls()
+            modelsim_ini = args.modelsim_ini
+        elif hasattr(args, 'gui'):
+            gui = args.gui
+            return cls(workdir, modelsim_ini, gui)
 
     def __init__(self, workdir='msim_work', modelsim_ini='modelsim_ini',
                  gui=False):
