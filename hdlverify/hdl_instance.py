@@ -45,19 +45,19 @@ class _CosimGen(object):
     PARAM_VAL = INDENT*' ' + '.{par}({val}),\n'
 
     def __init__(self, top, param, port, sim):
-        self.top = top
-        self.top_name = '%s.%s' % (str(top[0]), top[1])
-        self.wrapper_module = 'dut_wrapper_%s' % self.top[1]
-        self.param = param
-        self.port = port
-        self.sim = sim
+        self.__top = top
+        self.__top_name = '%s.%s' % (str(top[0]), top[1])
+        self.__wrapper = 'dut_wrapper_%s' % self.__top[1]
+        self.__param = param
+        self.__port = port
+        self.__sim = sim
 
     def _generate_verilog_wrapper(self):
         decl = ''
         from_myhdl = ''
         to_myhdl = ''
         assigns = ''
-        for k, v in self.port.items():
+        for k, v in self.__port.items():
             sig, direction = v
             arr = '' if type(sig.val) == bool\
                   else self.ARRAY_TPL.format(w=len(sig))
@@ -77,38 +77,38 @@ class _CosimGen(object):
         to_myhdl = to_myhdl[self.INDENT-1:-2]
         from_myhdl = from_myhdl[self.INDENT+1:-2]
         params = ''
-        for k, v in self.param.items():
+        for k, v in self.__param.items():
             if type(v) == bool:
                 v = 1 if v else 0
             params += self.PARAM_VAL.format(par=k, val=v)
         params = self.PARAM_TPL.format(param=params[:-2])
 
-        wrapper = self.VLOG_WRAPPER_TPL.format(wrapper=self.wrapper_module,
-                                               unit=self.top[1],
+        wrapper = self.VLOG_WRAPPER_TPL.format(wrapper=self.__wrapper,
+                                               unit=self.__top[1],
                                                declarations=decl,
                                                from_myhdl=from_myhdl,
                                                to_myhdl=to_myhdl,
                                                assigns=assigns,
                                                param=params)
-        wrapper_path = '%s.v' % self.wrapper_module
+        wrapper_path = '%s.v' % self.__wrapper
         with open(wrapper_path, 'w') as f:
             f.write(wrapper)
-        self.sim.add_lib('work')
-        self.sim.add_src(wrapper_path, 'work')
+        self.__sim.add_lib('work')
+        self.__sim.add_src(wrapper_path, 'work')
 
     def _generate_vhdl_wrapper(self):
         raise NotImplementedError
 
     def _prepare_cosim(self):
-        if self.sim.interface == SimulatorInterface.VERILOG_VPI:
+        if self.__sim.interface == SimulatorInterface.VERILOG_VPI:
             self._generate_verilog_wrapper()
-        elif self.sim.interface == SimulatorInterface.GHDL_VPI:
+        elif self.__sim.interface == SimulatorInterface.GHDL_VPI:
             self._generate_vhdl_wrapper()
 
     def _cosim(self):
         self._prepare_cosim()
-        cmd = self.sim.get_run_cmd(self.wrapper_module)
-        cosim_kwargs = {k: v[0] for k, v in self.port.items()}
+        cmd = self.__sim.get_run_cmd(self.__wrapper)
+        cosim_kwargs = {k: v[0] for k, v in self.__port.items()}
         logging.debug('[%s] Cosim kwargs: %s', self, cosim_kwargs)
         cosim = Cosimulation(cmd, **cosim_kwargs)
         return cosim
@@ -116,31 +116,31 @@ class _CosimGen(object):
 class HDLInstance(object):
 
     def __init__(self, ver=None):
-        self.ver = ver
-        self.libs = {}
+        self.__ver = ver
+        self.__libs = {}
 
     def add_library(self, lib):
-        self.libs[lib.name] = lib
+        self.__libs[lib.name] = lib
 
     def get_instance(self, top_name, param=None, port=None):
         spl = top_name.split('.')
         if len(spl) > 2:
             raise LibraryNestingError(top_name)
         elif len(spl) == 2:
-            if spl[0] in self.libs:
-                top = (self.libs[spl[0]], spl[1])
+            if spl[0] in self.__libs:
+                top = (self.__libs[spl[0]], spl[1])
             else:
                 raise UnitNotFoundError(spl[0], spl[1])
-        elif 'work' in self.libs:
+        elif 'work' in self.__libs:
             logging.info('Library not specified, assuming "work"' +
                          'for instance lookup')
-            top = (self.libs['work'], top_name)
+            top = (self.__libs['work'], top_name)
         else:
             raise UnitNotFoundError('work', top_name)
 
-        for k, v in self.libs.items():
+        for k, v in self.__libs.items():
             v._compile()
 
-        gen = _CosimGen(top, param, port, self.ver.simulator)
+        gen = _CosimGen(top, param, port, self.__ver.simulator)
         instance = gen._cosim()
         return instance

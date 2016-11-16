@@ -22,12 +22,13 @@ class ModelsimSimulator(Simulator):
 
     name = 'msim'
     sim_exec = 'vsim'
-    vhdl_compile_exec = 'vcom'
-    vlog_compile_exec = 'vlog'
-    library_exec = 'vlib'
-    map_exec = 'vmap'
     interface = SimulatorInterface.VERILOG_VPI
-    vpi_bin = 'modelsim_vpi'
+
+    __vhdl_compile_exec = 'vcom'
+    __vlog_compile_exec = 'vlog'
+    __library_exec = 'vlib'
+    __map_exec = 'vmap'
+    __vpi_bin = 'modelsim_vpi'
 
     std = {'V1995': '-vlog95compat',
            'V2001': '-vlog01compat',
@@ -55,18 +56,18 @@ class ModelsimSimulator(Simulator):
 
     def __init__(self, workdir='msim_work', modelsim_ini='modelsim_ini',
                  gui=False):
-        self.modelsim_ini = modelsim_ini
-        self.gui = gui
+        self.__modelsim_ini = modelsim_ini
+        self.__gui = gui
         super(ModelsimSimulator, self).__init__(workdir)
         if workdir:
-            self._exec([os.path.join(self.path, self.library_exec), workdir])
+            self._exec([os.path.join(self._path, self.__library_exec), workdir])
 
 
     def _compile_vhdl_cmd(self, path, lib, std, include):
         if not std:
             std = self.std['VHDL-2008']
         quiet = None if Debug.enabled else '-quiet'
-        return [os.path.join(self.path, self.vhdl_compile_exec), std,
+        return [os.path.join(self._path, self.__vhdl_compile_exec), std,
                 quiet, '-work', lib, path]
 
     def _compile_verilog_cmd(self, path, lib, std, include, defines=None):
@@ -78,15 +79,17 @@ class ModelsimSimulator(Simulator):
             for k, v in defines:
                 defn += '+%s=%s' % (k, v)
         quiet = None if Debug.enabled else '-quiet'
-        return [os.path.join(self.path, self.vlog_compile_exec), std,
+        return [os.path.join(self._path, self.__vlog_compile_exec), std,
                 quiet, '-work', lib, path]
 
     def _add_lib(self, lib):
-        if self.workdir:
-            self._exec([os.path.join(self.path, self.library_exec), '%s/%s' % (self.workdir, lib)])
-            self._exec([os.path.join(self.path, self.map_exec), lib, '%s/%s' % (self.workdir, lib)])
+        if self._workdir:
+            self._exec([os.path.join(self._path, self.__library_exec), '%s/%s' %
+                        (self._workdir, lib)])
+            self._exec([os.path.join(self._path, self.__map_exec), lib, '%s/%s' %
+                        (self._workdir, lib)])
         else:
-            self._exec([os.path.join(self.path, self.library_exec), lib])
+            self._exec([os.path.join(self.path, self.__library_exec), lib])
 
     def _add_src(self, path, src_tup):
         lib, std, include, defines = src_tup
@@ -103,9 +106,9 @@ class ModelsimSimulator(Simulator):
             logging.error('[%s] File: %s has uknown type: %s', self, path, ext)
 
     def _get_dofile(self):
-        dofile = os.path.join(self.workdir, 'msim_cosim.do')
+        dofile = os.path.join(self._workdir, 'msim_cosim.do')
         with open(dofile, 'w') as f:
-            if not self.gui:
+            if not self.__gui:
                 f.write('run -all\n')
                 f.write('quit')
         return dofile
@@ -113,10 +116,10 @@ class ModelsimSimulator(Simulator):
     def _get_fli(self):
         ext = '.dll' if os.name == 'nt' else '.so'
         return os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            'bin', self.vpi_bin+ext)
+                            'bin', self.__vpi_bin+ext)
 
     def get_run_cmd(self, top, fli=None):
-        c = '' if self.gui else '-c'
+        c = '' if self.__gui else '-c'
         dbg = '' if Debug.enabled else '-quiet'
         do = self._get_dofile()
         fli = self._get_fli() if fli is None else fli

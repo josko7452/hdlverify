@@ -15,6 +15,7 @@ from enum import Enum
 
 SIM_ENV = 'HDLVERIFY_SIM'
 
+
 class SimulatorInterface(Enum):
     VERILOG_VPI = 0
     GHDL_VPI = 1
@@ -58,10 +59,10 @@ class Simulator(object):
         return cls._find_path() is not None
 
     def __init__(self, workdir='tmp'):
-        self.libs = set([])
-        self.srcs = {}
-        self.workdir = workdir
-        self.path = self._find_path()
+        self._libs = set([])
+        self._srcs = {}
+        self._workdir = workdir
+        self._path = self._find_path()
 
     def _exec(self, cmd, *args, **kwargs):
         cmd = [i for i in cmd if i is not None]
@@ -76,17 +77,17 @@ class Simulator(object):
         raise NotImplementedError
 
     def add_lib(self, lib):
-        if lib in self.libs:
+        if lib in self._libs:
             logging.warning('[%s] Library %s does already exists', self, lib)
         else:
-            self.libs.add(lib)
+            self._libs.add(lib)
             self._add_lib(lib)
 
     def add_src(self, path, lib, std=None, include=None, defines={}):
-        if path in self.srcs:
+        if path in self._srcs:
             logging.warning('[%s] Source %s does already exists', self, path)
         else:
-            self.srcs[path] = (lib, std, include)
+            self._srcs[path] = (lib, std, include)
             self._add_src(path, (lib, std, include, defines))
 
     def get_run_cmd(self, top, fli=None):
