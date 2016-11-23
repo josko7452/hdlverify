@@ -12,6 +12,10 @@ from myhdl import Cosimulation
 from hdlverify import Direction
 from simulator import SimulatorInterface
 from error import LibraryNestingError, UnitNotFoundError
+import os
+import binascii
+
+RANDOM_PREFIX_LEN = 2
 
 
 class _CosimGen(object):
@@ -47,7 +51,8 @@ class _CosimGen(object):
     def __init__(self, top, param, port, sim):
         self.__top = top
         self.__top_name = '%s.%s' % (str(top[0]), top[1])
-        self.__wrapper = 'dut_wrapper_%s' % self.__top[1]
+        self.__random_prefix = binascii.b2a_hex(os.urandom(RANDOM_PREFIX_LEN))
+        self.__wrapper = 'dut_wrapper_%s_%s' % (self.__random_prefix, self.__top[1])
         self.__param = param
         self.__port = port
         self.__sim = sim
