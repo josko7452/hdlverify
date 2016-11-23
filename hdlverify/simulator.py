@@ -83,8 +83,8 @@ class Simulator(object):
             self._libs.add(lib)
             self._add_lib(lib)
 
-    def add_src(self, path, lib, std=None, include=None, defines={}):
-        if path in self._srcs:
+    def add_src(self, path, lib, std=None, include=None, defines={}, replace=False):
+        if path in self._srcs and not replace:
             logging.warning('[%s] Source %s does already exists', self, path)
         else:
             self._srcs[path] = (lib, std, include)

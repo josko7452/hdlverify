@@ -96,7 +96,7 @@ class _CosimGen(object):
         with open(wrapper_path, 'w') as f:
             f.write(wrapper)
         self.__sim.add_lib('work')
-        self.__sim.add_src(wrapper_path, 'work')
+        self.__sim.add_src(wrapper_path, 'work', replace=True)
 
     def _generate_vhdl_wrapper(self):
         raise NotImplementedError
