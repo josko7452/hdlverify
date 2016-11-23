@@ -80,6 +80,8 @@ class _CosimGen(object):
         for k, v in self.__param.items():
             if type(v) == bool:
                 v = 1 if v else 0
+            if type(v) == str:
+                v = '"%s"' % v
             params += self.PARAM_VAL.format(par=k, val=v)
         params = self.PARAM_TPL.format(param=params[:-2])
 
