@@ -10,6 +10,7 @@ from python utilising MyHDL cosimulation capabity.
 import logging
 from myhdl import Cosimulation
 from hdlverify import Direction
+from hdlverify import util
 from simulator import SimulatorInterface
 from error import LibraryNestingError, UnitNotFoundError
 import os
@@ -48,7 +49,9 @@ class _CosimGen(object):
 
     PARAM_VAL = INDENT*' ' + '.{par}({val}),\n'
 
-    def __init__(self, top, param, port, sim):
+    def __init__(self, top, param, port, sim, workdir='cosim_work'):
+        self.__workdir = workdir
+        util.makedirs(workdir)
         self.__top = top
         self.__top_name = '%s.%s' % (str(top[0]), top[1])
         self.__random_prefix = binascii.b2a_hex(os.urandom(RANDOM_PREFIX_LEN))
@@ -56,6 +59,7 @@ class _CosimGen(object):
         self.__param = param
         self.__port = port
         self.__sim = sim
+        self.__worklib = self.__random_prefix+'_wrapper_work'
 
     def _generate_verilog_wrapper(self):
         decl = ''
@@ -97,11 +101,11 @@ class _CosimGen(object):
                                                to_myhdl=to_myhdl,
                                                assigns=assigns,
                                                param=params)
-        wrapper_path = '%s.v' % self.__wrapper
+        wrapper_path = os.path.join(self.__workdir, '%s.v' % self.__wrapper)
         with open(wrapper_path, 'w') as f:
             f.write(wrapper)
-        self.__sim.add_lib('work')
-        self.__sim.add_src(wrapper_path, 'work', replace=True)
+        self.__sim.add_lib(self.__worklib)
+        self.__sim.add_src(wrapper_path, self.__worklib, replace=True)
 
     def _generate_vhdl_wrapper(self):
         raise NotImplementedError
@@ -114,7 +118,7 @@ class _CosimGen(object):
 
     def _cosim(self):
         self._prepare_cosim()
-        cmd = self.__sim.get_run_cmd(self.__wrapper)
+        cmd = self.__sim.get_run_cmd(self.__wrapper, lib=self.__worklib)
         cosim_kwargs = {k: v[0] for k, v in self.__port.items()}
         logging.debug('[%s] Cosim kwargs: %s', self, cosim_kwargs)
         cosim = Cosimulation(cmd, **cosim_kwargs)

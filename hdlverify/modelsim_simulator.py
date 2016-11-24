@@ -83,6 +83,7 @@ class ModelsimSimulator(Simulator):
                 quiet, '-work', lib, path]
 
     def _add_lib(self, lib):
+        self._libs.add(lib)
         if self._workdir:
             self._exec([os.path.join(self._path, self.__library_exec), '%s/%s' %
                         (self._workdir, lib)])
@@ -118,13 +119,14 @@ class ModelsimSimulator(Simulator):
         return os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             'bin', self.__vpi_bin+ext)
 
-    def get_run_cmd(self, top, fli=None):
+    def get_run_cmd(self, top, lib='work', fli=None):
         c = '' if self.__gui else '-c'
         dbg = '' if Debug.enabled else '-quiet'
         do = self._get_dofile()
         fli = self._get_fli() if fli is None else fli
-        cmd = ('%s %s %s -pli %s -do %s %s'
-               % (self.sim_exec, c, dbg, fli, do, top))
+        libs = ' '.join(['-L '+str(l) for l in self._libs])
+        cmd = ('%s %s %s %s -pli %s -do %s %s.%s'
+               % (self.sim_exec, libs, c, dbg, fli, do, lib, top))
         logging.debug('[%s] cmd for cosim: %s' % (self, cmd))
         return cmd
 

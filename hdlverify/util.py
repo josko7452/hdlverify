@@ -8,6 +8,17 @@ Various utilities
 
 import os
 import sys
+import logging
+
+
+def makedirs(path):
+    """ Creates a directory in given path, ignores if directory exists.
+    """
+    try:
+        os.makedirs(path)
+    except OSError as e:
+        logging.warning(e)
+
 
 def which(cmd, mode=os.F_OK | os.X_OK, path=None):
     """Given a command, mode, and a PATH string, return the path which
